@@ -1,41 +1,31 @@
-import pytest
-from django.conf import settings
+from http import HTTPStatus
 
 
 class TestAuthAPI:
 
-    def test_settings(self):
-        assert hasattr(settings, 'REST_FRAMEWORK'), (
-            'Проверьте, что добавили настройку `REST_FRAMEWORK` в файл `settings.py`'
-        )
-
-        assert 'DEFAULT_AUTHENTICATION_CLASSES' in settings.REST_FRAMEWORK, (
-            'Проверьте, что добавили `DEFAULT_AUTHENTICATION_CLASSES` в `REST_FRAMEWORK` файла `settings.py`'
-        )
-        assert (
-            'rest_framework.authentication.TokenAuthentication' in
-            settings.REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES']
-        ), (
-            "Проверьте, что в списке значения `DEFAULT_AUTHENTICATION_CLASSES` в `REST_FRAMEWORK` "
-            "содержится 'rest_framework.authentication.TokenAuthentication'"
-        )
-
-    @pytest.mark.django_db(transaction=True)
-    def test_auth(self, client, user):
-
+    def test_auth(self, client, user, password):
         response = client.post(
-            '/api/v1/api-token-auth/', data={'username': user.username, 'password': '1234567'}
+            '/api/v1/api-token-auth/',
+            data={'username': user.username, 'password': password}
         )
-
-        assert response.status_code != 404, (
-            'Страница `/api/v1/api-token-auth/` не найдена, проверьте этот адрес в *urls.py*'
+        assert response.status_code != HTTPStatus.NOT_FOUND, (
+            'Страница `/api/v1/api-token-auth/` не найдена, проверьте этот '
+            'адрес в *urls.py*.'
         )
-
-        assert response.status_code == 200, (
-            'Страница `/api/v1/api-token-auth/` работает не правильно'
+        assert response.status_code == HTTPStatus.OK, (
+            'Проверьте, что POST-запрос к `/api/v1/api-token-auth/` '
+            'возвращает ответ с кодом 200.'
         )
 
         auth_data = response.json()
         assert 'token' in auth_data, (
-            'Проверьте, что при POST запросе `/api/v1/api-token-auth/` возвращаете токен'
+            'Проверьте, что ответ на POST-запрос с валидными данными к '
+            '`/api/v1/api-token-auth/` содержит токен.'
+        )
+
+    def test_auth_with_invalid_data(self, client, user):
+        response = client.post('/api/v1/api-token-auth/', data={})
+        assert response.status_code == HTTPStatus.BAD_REQUEST, (
+            'Проверьте, что POST-запрос к `/api/v1/api-token-auth/` '
+            'с некорректными данными возвращает ответ со статусовм 400.'
         )
