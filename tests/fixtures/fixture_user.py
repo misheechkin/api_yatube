@@ -2,13 +2,24 @@ import pytest
 
 
 @pytest.fixture
-def user(django_user_model):
-    return django_user_model.objects.create_user(username='TestUser', password='1234567')
+def password():
+    return '1234567'
 
 
 @pytest.fixture
-def another_user(django_user_model):
-    return django_user_model.objects.create_user(username='TestUser2', password='1234567')
+def user(django_user_model, password):
+    return django_user_model.objects.create_user(
+        username='TestUser',
+        password=password
+    )
+
+
+@pytest.fixture
+def another_user(django_user_model, password):
+    return django_user_model.objects.create_user(
+        username='TestUser2',
+        password=password
+    )
 
 
 @pytest.fixture
